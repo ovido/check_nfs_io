@@ -138,7 +138,7 @@ sub parse_options(){
 #***************************************************#
 sub print_usage(){
   print "Usage: $0 [-v] [-r <runs>] [-i <interval>] [-e <exclude>] [-m|-a] \n";
-  print "        -w <avg_rtt> -c <avg_rtt>\n";
+  print "        -w <avg_rtt_read>,<avg_rtt_write> -c <avg_rtt_read>,<avg_rtt_write>\n";
 }
 
 
@@ -171,9 +171,9 @@ Options:
     Use max. values of runs (default)
  -a, --average
     Use average values of runs 
- -w, --warning=<avg_rtt>
+ -w, --warning=<avg_rtt_read>,<avg_rtt_write>
     Value to result in warning status (ms)
- -c, --critical=<avg_rtt>
+ -c, --critical=<avg_rtt_read>,<avg_rtt_write>
     Value to result in critical status (ms)
  -v, --verbose
     Show details for command-line debugging
