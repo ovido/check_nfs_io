@@ -1,0 +1,10 @@
+#*********************************************************#
+#                                                         #
+#   Changelog of check_nfs_io plugin for Icinga/Nagios    #
+#                                                         #
+#*********************************************************#
+
+* 0.1.0 - Fri Mar 08 2013
+- This is the first public beta release of new plugin check_nfs_io
+
+

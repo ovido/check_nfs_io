@@ -1,0 +1,73 @@
+#*********************************************************#
+#                                                         #
+#    README for check_nfs_io plugin for Icinga/Nagios     #
+#                                                         #
+#*********************************************************#
+
+What is check_nfs_io?
+=====================
+
+This plugin for Icinga/Nagios is used to monitor NFS share I/O utilization
+on Linux hosts.
+
+
+Contributions / Help
+====================
+
+Send email to r.koch@ovido.at if you have questions regarding use
+of this software. Please include the following information in your email:
+* OS type and version
+* Perl version
+
+To submit patches of suggest improvements, send email to r.koch@ovido.at.
+
+
+Installation
+============
+
+The check_io installation can be used by following the standard autotools
+installation process, documented in the INSTALL file. As a quick start you can do
+
+$ ./configure
+$ make all
+# make install
+
+This will install check_io to /usr/local/nagios/libexec and the PNP template
+to /usr/local/pnp4nagios/share/templates.
+
+To change these paths use the following options:
+--prefix=<path_to_nagios_plugins>
+--with-pnp-dir=<path_to_pnp_share_folder>
+
+If you don't use PNP you can disable installing the PNP template with:
+--disable-pnp-template
+
+To change the user and group ownership of these files use:
+--with-nagios-user=<user>
+--with-nagios-group=<group>
+
+The 'nagios-plugins-io.spec' file demonstrates how to distribute check_nfs_io
+as an RPM package.
+
+Also make sure that the following requirements are met:
+Perl
+Perl-Modules:
+  Getopt::Long
+
+
+Documentation
+=============
+
+Short documentation on how to use this plugin.
+
+Detailed documentation can be found on the project website
+https://labs.ovido.at/monitoring/wiki/check_nfs_io.
+
+The following checks can be performed by this plugin:
+
+...
+
+
+
+
+
