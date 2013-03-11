@@ -6,7 +6,7 @@
 #  Name:    check_nfs_io                              #
 #                                                     #
 #  Version: 0.1                                       #
-#  Created: 2013-03-08                                #
+#  Created: 2013-03-11                                #
 #  License: GPL - http://www.gnu.org/licenses         #
 #  Copyright: (c)2013 ovido gmbh, http://www.ovido.at #
 #  Author:  Rene Koch <r.koch@ovido.at>               #
@@ -29,7 +29,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 # Changelog:
-# * 0.1.0 - Fri Mar 08 2013 - Rene Koch <r.koch@ovido.at>
+# * 0.1.0 - Mon Mar 11 2013 - Rene Koch <r.koch@ovido.at>
 # - This is the first public beta release of new plugin check_nfs_io
 
 use strict;
@@ -216,7 +216,7 @@ my $cmd = undef;
 my $shares = "";
 
 # get list of NFS shares
-my @tmp = `sudo nfsiostat`;
+my @tmp = `sudo /usr/sbin/nfsiostat`;
 for (my $i=0;$i<=$#tmp;$i++){
   next unless $tmp[$i] =~ /mounted on/;
   chomp $tmp[$i];
@@ -240,7 +240,7 @@ if ($shares eq ""){
   exit_plugin("unknown","No NFS shares left to check!");
 }
 
-$cmd = "sudo nfsiostat " . $o_interval . " " . $o_runs . $shares;
+$cmd = "sudo /usr/sbin/nfsiostat " . $o_interval . " " . $o_runs . $shares;
 
 # get statistics from nfsiostat
 my %nfsiostat;
