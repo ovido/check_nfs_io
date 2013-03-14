@@ -5,7 +5,7 @@
 #                                                     #
 #  Name:    check_nfs_io                              #
 #                                                     #
-#  Version: 0.1                                       #
+#  Version: 0.2                                       #
 #  Created: 2013-03-11                                #
 #  License: GPL - http://www.gnu.org/licenses         #
 #  Copyright: (c)2013 ovido gmbh, http://www.ovido.at #
@@ -29,6 +29,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 # Changelog:
+# * 0.2.0 - Thu Mar 14 2013 - Rene Koch <r.koch@ovido.at>
+# - Changed performance data output
 # * 0.1.0 - Mon Mar 11 2013 - Rene Koch <r.koch@ovido.at>
 # - This is the first public beta release of new plugin check_nfs_io
 
@@ -47,7 +49,7 @@ my $perfdata	= 1;
 
 # Variables
 my $prog	= "check_nfs_io";
-my $version	= "0.1";
+my $version	= "0.2";
 my $projecturl  = "https://labs.ovido.at/monitoring/wiki/check_nfs_io";
 
 my $o_verbose	= undef;	# verbosity
@@ -308,14 +310,14 @@ foreach my $nfsshare (keys %nfsiostat){
     }
     if ($param eq "rs"){
       $rs = $value;
-      $perfstats .= "'" . $nfsshare . "_r/s'=$value;;;0; ";
+      $perfstats .= "'" . $nfsshare . "_rs'=$value;;;0; ";
     }elsif ($param eq "ws"){
       $ws = $value;
-      $perfstats .= "'" . $nfsshare . "_w/s'=$value;;;0; ";
+      $perfstats .= "'" . $nfsshare . "_ws'=$value;;;0; ";
     }elsif ($param eq "rkBs"){
-      $perfstats .= "'" . $nfsshare . "_rkB/s'=$value" . "KB;;;0; ";
+      $perfstats .= "'" . $nfsshare . "_rkBs'=$value" . "KB;;;0; ";
     }elsif ($param eq "wkBs"){
-      $perfstats .= "'" . $nfsshare . "_wkB/s'=$value" . "KB;;;0; ";
+      $perfstats .= "'" . $nfsshare . "_wkBs'=$value" . "KB;;;0; ";
     }elsif ($param eq "rrtt"){
       ($statuscode,$tmp_sc) = get_status($value,$warn[0],$crit[0]);
       $output{$nfsshare}{'read avg RTT'} = $value if ( ($tmp_sc eq 'critical') || ($tmp_sc eq 'warning') );
