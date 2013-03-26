@@ -125,6 +125,8 @@ sub parse_options(){
 	exit $ERRORS{$status{'unknown'}};
       }
     }
+  }else{
+    $statuscode = "ok";
   }
 
   # verbose handling
