@@ -5,7 +5,7 @@
 #                                                     #
 #  Name:    check_nfs_io                              #
 #                                                     #
-#  Version: 0.2                                       #
+#  Version: 0.3                                       #
 #  Created: 2013-03-11                                #
 #  License: GPL - http://www.gnu.org/licenses         #
 #  Copyright: (c)2013 ovido gmbh, http://www.ovido.at #
@@ -29,6 +29,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 # Changelog:
+# * 0.3.0 - Tue Mar 26 2013 - Rene Koch <r.koch@ovido.at>
+# - Added --type for warning/criticial values per type
 # * 0.2.0 - Thu Mar 14 2013 - Rene Koch <r.koch@ovido.at>
 # - Changed performance data output
 # * 0.1.0 - Mon Mar 11 2013 - Rene Koch <r.koch@ovido.at>
@@ -49,7 +51,7 @@ my $perfdata	= 1;
 
 # Variables
 my $prog	= "check_nfs_io";
-my $version	= "0.2";
+my $version	= "0.3";
 my $projecturl  = "https://labs.ovido.at/monitoring/wiki/check_nfs_io";
 
 my $o_verbose	= undef;	# verbosity
@@ -58,10 +60,9 @@ my $o_version	= undef;	# version
 my @o_exclude	= ();		# exclude shares
 my $o_max	= undef;	# get max values
 my $o_average	= undef;	# get average values
-my $o_warn	= undef;	# warning
-my $o_crit	= undef;	# critical
-my @warn	= ();
-my @crit	= ();
+my @o_warn	= ();		# warning
+my @o_crit	= ();		# critical
+my @o_type	= ();
 
 my %status	= ( ok => "OK", warning => "WARNING", critical => "CRITICAL", unknown => "UNKNOWN");
 my %ERRORS	= ( "OK" => 0, "WARNING" => 1, "CRITICAL" => 2, "UNKNOWN" => 3);
@@ -88,8 +89,9 @@ sub parse_options(){
 	'e:s'	=> \@o_exclude,		'exclude:s'	=> \@o_exclude,
 	'm'	=> \$o_max,		'max'		=> \$o_max,
 	'a'	=> \$o_average,		'average'	=> \$o_average,
-	'w:s'	=> \$o_warn,		'warning:s'	=> \$o_warn,
-	'c:s'	=> \$o_crit,		'critical:s'	=> \$o_crit
+	't:s'	=> \@o_type,		'type:s'	=> \@o_type,
+	'w:s'	=> \@o_warn,		'warning:s'	=> \@o_warn,
+	'c:s'	=> \@o_crit,		'critical:s'	=> \@o_crit
   );
 
   # process options
@@ -103,27 +105,26 @@ sub parse_options(){
     exit $ERRORS{$status{'unknown'}};
   }
 
-  if ((! defined $o_warn) || (! defined $o_crit)){
-    print "Warning and critical values are required!\n";
-    print_usage();
-    exit $ERRORS{$status{'unknown'}};
-  }
-
-  # check warning and critical
-  if ($o_warn !~ /^(\d+)(\.?\d+)*,{1}(\d+)(\.?\d+)*$/){
-    print "Please give proper warning values!\n";
-    print_usage();
-    exit $ERRORS{$status{'unknown'}};
-  }else{
-    @warn = split /,/, $o_warn;
-  }
-
-  if ($o_crit !~ /^(\d+)(\.?\d+)*,{1}(\d+)(\.?\d+)*$/){
-    print "Please give proper critical values!\n";
-    print_usage();
-    exit $ERRORS{$status{'unknown'}};
-  }else{
-    @crit = split /,/, $o_crit;
+  # check values of type
+  if (scalar @o_type > 0){
+    if ($#o_warn < $#o_type){
+      print "Please specify warning value per type!\n";
+      print_usage();
+      exit $ERRORS{$status{'unknown'}};
+    }
+    if ($#o_crit < $#o_type){
+      print "Please specify critical value per type!\n";
+      print_usage();
+      exit $ERRORS{$status{'unknown'}};
+    }
+    # check values of type
+    for (my $i=0;$i<=$#o_type;$i++){
+      if ( ($o_type[$i] ne "avg_rtt") && ($o_type[$i] ne "avg_exe") ){ 
+	print "Type $o_type[$i] not support at the moment!\n";
+	print_usage();
+	exit $ERRORS{$status{'unknown'}};
+      }
+    }
   }
 
   # verbose handling
@@ -140,7 +141,7 @@ sub parse_options(){
 #***************************************************#
 sub print_usage(){
   print "Usage: $0 [-v] [-r <runs>] [-i <interval>] [-e <exclude>] [-m|-a] \n";
-  print "        -w <avg_rtt_read>,<avg_rtt_write> -c <avg_rtt_read>,<avg_rtt_write>\n";
+  print "        [-t <type>] [-w <warning>] [-c <critical>]\n";
 }
 
 
@@ -169,13 +170,17 @@ Options:
     Regex to exclude NFS mount points from beeing checked
     Note: use client mount point instead of share
           e.g. -e "/mnt/nfs"
+ -t, --type
+    Type of param to match with warning and critical values:
+    avg_rtt: average RTT time (server response time)
+    avg_exe: average EXE time (server+network response time)
  -m, --max
     Use max. values of runs (default)
  -a, --average
     Use average values of runs 
- -w, --warning=<avg_rtt_read>,<avg_rtt_write>
+ -w, --warning=DOUBLE
     Value to result in warning status (ms)
- -c, --critical=<avg_rtt_read>,<avg_rtt_write>
+ -c, --critical=DOUBLE
     Value to result in critical status (ms)
  -v, --verbose
     Show details for command-line debugging
@@ -278,15 +283,15 @@ for (my $i=0;$i<=$#result;$i++){
     if ( $result[$i-1] =~ /^read:/ ){
       # Read stats
       $nfsiostat{$share}{'rs'}[$x] = $tmp[1];
-      $nfsiostat{$share}{'rkBs'}[$x] = $tmp[1];
-      $nfsiostat{$share}{'rrtt'}[$x] = $tmp[1];
-      $nfsiostat{$share}{'rexe'}[$x] = $tmp[1];
+      $nfsiostat{$share}{'rkBs'}[$x] = $tmp[2];
+      $nfsiostat{$share}{'rrtt'}[$x] = $tmp[6];
+      $nfsiostat{$share}{'rexe'}[$x] = $tmp[7];
     }elsif ( $result[$i-1] =~ /^write:/ ){
       # Write stats
       $nfsiostat{$share}{'ws'}[$x] = $tmp[1];
-      $nfsiostat{$share}{'wkBs'}[$x] = $tmp[1];
-      $nfsiostat{$share}{'wrtt'}[$x] = $tmp[1];
-      $nfsiostat{$share}{'wexe'}[$x] = $tmp[1];
+      $nfsiostat{$share}{'wkBs'}[$x] = $tmp[2];
+      $nfsiostat{$share}{'wrtt'}[$x] = $tmp[6];
+      $nfsiostat{$share}{'wexe'}[$x] = $tmp[7];
     }
   }
 
@@ -300,6 +305,7 @@ foreach my $nfsshare (keys %nfsiostat){
   my ($rs, $ws) = undef;
   my $tmp_sc = undef;
   my %output;
+  my ($avg_rtt,$avg_exe) = 0;
   foreach my $param (sort keys %{ $nfsiostat{$nfsshare} }){
     # remove first entry when using multiple runs
     shift @{ $nfsiostat{$nfsshare}{$param} } if $o_runs > 1;
@@ -319,21 +325,33 @@ foreach my $nfsshare (keys %nfsiostat){
     }elsif ($param eq "wkBs"){
       $perfstats .= "'" . $nfsshare . "_wkBs'=$value" . "KB;;;0; ";
     }elsif ($param eq "rrtt"){
-      ($statuscode,$tmp_sc) = get_status($value,$warn[0],$crit[0]);
-      $output{$nfsshare}{'read avg RTT'} = $value if ( ($tmp_sc eq 'critical') || ($tmp_sc eq 'warning') );
-      $nfsio .= "$nfsshare (read avg RTT $value" if $o_verbose >= 1;
-      $perfstats .= "'" . $nfsshare . "_r_avg_rtt'=$value " . "ms;$warn[0];$crit[0];0; ";
+      $avg_rtt += $value;
+      $perfstats .= "'" . $nfsshare . "_r_avg_rtt'=$value " . "ms;;;0; ";
     }elsif ($param eq "wrtt"){
-      ($statuscode,$tmp_sc) = get_status($value,$warn[1],$crit[1]);
-      $output{$nfsshare}{'write avg RTT'} = $value if ( ($tmp_sc eq 'critical') || ($tmp_sc eq 'warning') );
-      $nfsio .= ", write avg RTT $value" if $o_verbose >= 1;
-      $perfstats .= "'" . $nfsshare . "_w_avg_rtt'=$value " . "ms;$warn[1];$crit[1];0; ";
+      $avg_rtt += $value;
+      $perfstats .= "'" . $nfsshare . "_w_avg_rtt'=$value " . "ms;;;0; ";
     }elsif ($param eq "rexe"){
+      $avg_exe += $value;
       $perfstats .= "'" . $nfsshare . "_r_avg_exe'=$value" . "ms;;;0; ";
     }elsif ($param eq "wexe"){
+      $avg_exe += $value;
       $perfstats .= "'" . $nfsshare . "_w_avg_exe'=$value" . "ms;;;0; ";
     }
   }
+
+  # check for warning and critical values
+  for (my $i=0;$i<=$#o_type;$i++){
+    if ($o_type[$i] eq "avg_rtt"){
+      ($statuscode,$tmp_sc) = get_status($avg_rtt,$o_warn[$i],$o_crit[$i]);
+      $output{$nfsshare}{'avg RTT'} = $avg_rtt if ( ($tmp_sc eq 'critical') || ($tmp_sc eq 'warning') );
+      $nfsio .= "$nfsshare (avg RTT $avg_rtt" if $o_verbose >= 1;
+    }elsif ($o_type[$i] eq "avg_exe"){
+      ($statuscode,$tmp_sc) = get_status($avg_exe,$o_warn[$i],$o_crit[$i]);
+      $output{$nfsshare}{'avg EXE'} = $avg_exe if ( ($tmp_sc eq 'critical') || ($tmp_sc eq 'warning') );
+      $nfsio .= ", avg EXE $avg_exe" if $o_verbose >= 1;
+    }
+  }
+
   my $ops = $rs + $ws;
   $nfsio .= ", ops/s $ops) " if $o_verbose >= 1;
 
