@@ -328,10 +328,10 @@ foreach my $nfsshare (keys %nfsiostat){
       $perfstats .= "'" . $nfsshare . "_wkBs'=$value" . "KB;;;0; ";
     }elsif ($param eq "rrtt"){
       $avg_rtt += $value;
-      $perfstats .= "'" . $nfsshare . "_r_avg_rtt'=$value " . "ms;;;0; ";
+      $perfstats .= "'" . $nfsshare . "_r_avg_rtt'=$value" . "ms;;;0; ";
     }elsif ($param eq "wrtt"){
       $avg_rtt += $value;
-      $perfstats .= "'" . $nfsshare . "_w_avg_rtt'=$value " . "ms;;;0; ";
+      $perfstats .= "'" . $nfsshare . "_w_avg_rtt'=$value" . "ms;;;0; ";
     }elsif ($param eq "rexe"){
       $avg_exe += $value;
       $perfstats .= "'" . $nfsshare . "_r_avg_exe'=$value" . "ms;;;0; ";
